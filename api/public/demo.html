@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Veyra — Démo live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { sans: ["Inter","-apple-system","sans-serif"], mono: ["JetBrains Mono","ui-monospace","monospace"] }
+} } };
+</script>
+<style>
+body{background:#0a0a0b}
+.card{background:#131316;border:1px solid rgba(255,255,255,.08);border-radius:16px}
+.inp{width:100%;background:#0a0a0b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;font-size:14px;color:#fafafa;outline:none}
+.inp:focus{border-color:#10b981}
+.navlink{color:#a1a1aa}.navlink:hover{color:#fff}.navlink.on{color:#fff}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1c21;border:1px solid rgba(255,255,255,.12);padding:10px 18px;border-radius:10px;font-size:13px;display:none;z-index:50}
+#l-out{white-space:pre-wrap}
+</style>
+</head>
+<body class="text-zinc-100 font-sans antialiased min-h-screen flex flex-col">
+
+<header class="sticky top-0 z-30 border-b border-white/10 bg-[#0a0a0b]/80 backdrop-blur-md">
+<div class="max-w-6xl mx-auto px-6 h-16 flex items-center gap-8">
+<a href="/" class="flex items-center gap-2.5 font-extrabold tracking-[0.2em] text-sm">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z" stroke="#8b5cf6" stroke-width="2" fill="rgba(139,92,246,.15)"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="#10b981" stroke-width="2" stroke-linecap="round"/></svg>VEYRA</a>
+<nav class="hidden md:flex items-center gap-6 text-sm ml-4">
+<a href="/" class="navlink">Accueil</a>
+<a href="/demo.html" class="navlink on">Démo</a>
+<a href="/integration.html" class="navlink">Intégration</a>
+<a href="/dashboard.html" class="navlink">Dashboard</a>
+</nav>
+<div class="ml-auto"><a href="/dashboard.html" class="bg-white text-black text-sm font-semibold rounded-lg px-4 py-2 hover:bg-zinc-200">Dashboard</a></div>
+</div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 flex-1 w-full py-12">
+<div class="max-w-xl mx-auto text-center mb-8">
+<span class="text-[11px] text-zinc-500 border border-white/10 rounded-full px-3 py-1">SANDBOX · AUCUNE DONNÉE RÉELLE</span>
+<h1 class="text-4xl font-extrabold tracking-tight mt-4">Démo live</h1>
+<p class="text-zinc-500 mt-2">Enrollez un utilisateur, passez le challenge comme dans votre app.<br>Le résultat s'affiche en temps réel ci-dessous.</p>
+</div>
+
+<div class="max-w-xl mx-auto card p-6">
+<label class="text-xs text-zinc-500 block mb-1.5">User ID</label>
+<input id="e-user" class="inp" value="demo-tigre">
+<label class="text-xs text-zinc-500 block mt-3 mb-1.5">Mot secret <span class="text-zinc-600">(3–6 lettres)</span></label>
+<input id="e-secret" class="inp font-mono uppercase" value="TIGRE" maxlength="6">
+<div class="grid grid-cols-2 gap-3 mt-3">
+<div><label class="text-xs text-zinc-500 block mb-1.5">Couleur</label>
+<select id="e-color" class="inp"><option>violet</option><option>jaune</option><option>bleu</option></select></div>
+<div><label class="text-xs text-zinc-500 block mb-1.5">Motif</label>
+<select id="e-motif" class="inp"><option>etoile</option><option>rond</option><option>triangle</option></select></div>
+</div>
+<label class="text-xs text-zinc-500 block mt-3 mb-1.5">Clé API <span class="text-zinc-600">(si configurée)</span></label>
+<input id="e-key" class="inp font-mono !text-xs" placeholder="veyra_…">
+<div class="flex gap-2.5 mt-4">
+<button onclick="enroll()" class="flex-1 border border-white/15 rounded-lg py-2.5 text-sm font-medium hover:bg-white/5">1 · Enroller</button>
+<button onclick="login()" class="flex-1 bg-white text-black rounded-lg py-2.5 text-sm font-semibold hover:bg-zinc-200">2 · Challenge</button>
+</div>
+<p id="e-msg" class="text-[13px] text-zinc-500 mt-3"></p>
+<div id="security-check" class="mt-2 flex justify-center"></div>
+<pre id="l-out" class="bg-black border border-white/10 rounded-xl p-3.5 mt-3 text-xs text-zinc-400 font-mono overflow-auto">En attente de vérification…</pre>
+</div>
+
+<p class="text-center text-[13px] text-zinc-600 mt-8">Convaincu ? <a href="/integration.html" class="text-zinc-300 underline underline-offset-4">Intégrez Veyra à votre projet →</a></p>
+</main>
+
+<footer class="border-t border-white/10 py-6 text-center text-[13px] text-zinc-600">
+<a href="/" class="hover:text-white">Accueil</a> · <a href="/demo.html" class="text-zinc-300">Démo</a> · <a href="/integration.html" class="hover:text-white">Intégration</a> · <a href="/dashboard.html" class="hover:text-white">Dashboard</a> · <a href="https://github.com/bigk7697-crypto/Veyra" class="hover:text-white">GitHub</a>
+</footer>
+<div id="toast"></div>
+<script src="/widget.js"></script>
+<script>
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2200);}
+function keyHeaders(){const k=document.getElementById('e-key').value.trim();const h={'Content-Type':'application/json'};if(k)h['X-API-Key']=k;return h;}
+async function enroll(){const body={userId:document.getElementById('e-user').value.trim(),secretWord:document.getElementById('e-secret').value,color:document.getElementById('e-color').value,motif:document.getElementById('e-motif').value};
+try{const r=await fetch('/v1/enroll',{method:'POST',headers:keyHeaders(),body:JSON.stringify(body)});const j=await r.json();const m=document.getElementById('e-msg');m.textContent=r.ok?('Enrollé : '+j.userId+' · '+j.color+' · '+j.motif):('Erreur : '+(j.error||r.status));m.className='text-[13px] mt-3 '+(r.ok?'text-emerald-400':'text-red-400');}catch(e){document.getElementById('e-msg').textContent='Erreur réseau';}}
+function login(){const userId=document.getElementById('e-user').value.trim();const apiKey=document.getElementById('e-key').value.trim();
+document.getElementById('l-out').textContent='Challenge en cours…';
+Veyra.challenge({container:'#security-check',apiBase:'',userId,apiKey,
+onSuccess:(r)=>{document.getElementById('l-out').innerHTML='<span style="color:#34d399">ACCÈS ACCORDÉ</span>\n'+JSON.stringify(r,null,2);},
+onFailure:(r)=>{document.getElementById('l-out').innerHTML='<span style="color:#f87171">VÉRIFICATION ÉCHOUÉE</span>\n'+JSON.stringify(r,null,2);}});}
+</script>
+<script src="/bg.js"></script>
+</body>
+</html>

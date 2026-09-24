@@ -1,9 +1,10 @@
 import "dotenv/config";
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { cfg } from "./config.js";
 import { ALL_COLORS, buildGrid, cleanMotif, cleanSecretWord, type VeyraColor } from "./challenge.js";
@@ -28,10 +29,14 @@ const PUBLIC_DIR = join(process.cwd(), "public");
 
 const app = Fastify({ logger: { level: cfg.logLevel as string }, trustProxy: cfg.trustProxy });
 
-async function main(): Promise<void> {
+export async function buildApp(): Promise<FastifyInstance> {
   await app.register(cors, { origin: cfg.corsOrigins.length ? cfg.corsOrigins : true });
   await app.register(rateLimit, { max: cfg.rateMax, timeWindow: cfg.rateWindow });
-  await app.register(fastifyStatic, { root: PUBLIC_DIR, prefix: "/", index: cfg.demoEnabled ? "index.html" : false });
+  // En serverless (Vercel), les fichiers statics sont servis par le CDN :
+  // on ne monte le dossier public que s'il existe à côté du serveur.
+  if (existsSync(PUBLIC_DIR)) {
+    await app.register(fastifyStatic, { root: PUBLIC_DIR, prefix: "/", index: cfg.demoEnabled ? "index.html" : false });
+  }
 
   if (!cfg.demoEnabled) {
     app.get("/", async () => ({
@@ -245,6 +250,12 @@ async function main(): Promise<void> {
     }
   }, 60_000).unref();
 
+  return app;
+}
+
+async function main(): Promise<void> {
+  const app = await buildApp();
+
   const shutdown = async (): Promise<void> => {
     try {
       await app.close();
@@ -264,4 +275,4 @@ async function main(): Promise<void> {
   }
 }
 
-void main();
+if (require.main === module) void main();

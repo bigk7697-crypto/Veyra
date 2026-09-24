@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Veyra — Intégration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { sans: ["Inter","-apple-system","sans-serif"], mono: ["JetBrains Mono","ui-monospace","monospace"] }
+} } };
+</script>
+<style>
+body{background:#0a0a0b}
+.card{background:#131316;border:1px solid rgba(255,255,255,.08);border-radius:16px}
+.navlink{color:#a1a1aa}.navlink:hover{color:#fff}.navlink.on{color:#fff}
+.codebox{background:#0a0a0b;border:1px solid rgba(255,255,255,.08);border-radius:12px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1c21;border:1px solid rgba(255,255,255,.12);padding:10px 18px;border-radius:10px;font-size:13px;display:none;z-index:50}
+table.cfg{width:100%;border-collapse:collapse;font-size:13px}
+table.cfg td,table.cfg th{border-bottom:1px solid rgba(255,255,255,.06);padding:8px 10px;text-align:left;vertical-align:top}
+table.cfg th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#71717a}
+</style>
+</head>
+<body class="text-zinc-100 font-sans antialiased min-h-screen flex flex-col">
+
+<header class="sticky top-0 z-30 border-b border-white/10 bg-[#0a0a0b]/80 backdrop-blur-md">
+<div class="max-w-6xl mx-auto px-6 h-16 flex items-center gap-8">
+<a href="/" class="flex items-center gap-2.5 font-extrabold tracking-[0.2em] text-sm">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z" stroke="#8b5cf6" stroke-width="2" fill="rgba(139,92,246,.15)"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="#10b981" stroke-width="2" stroke-linecap="round"/></svg>VEYRA</a>
+<nav class="hidden md:flex items-center gap-6 text-sm ml-4">
+<a href="/" class="navlink">Accueil</a>
+<a href="/demo.html" class="navlink">Démo</a>
+<a href="/integration.html" class="navlink on">Intégration</a>
+<a href="/dashboard.html" class="navlink">Dashboard</a>
+</nav>
+<div class="ml-auto"><a href="/dashboard.html" class="bg-white text-black text-sm font-semibold rounded-lg px-4 py-2 hover:bg-zinc-200">Dashboard</a></div>
+</div>
+</header>
+
+<main class="max-w-4xl mx-auto px-6 flex-1 w-full py-12">
+<div class="mb-10">
+<span class="text-[11px] text-zinc-500 border border-white/10 rounded-full px-3 py-1">GUIDE · 5 MINUTES</span>
+<h1 class="text-4xl font-extrabold tracking-tight mt-4">Intégrez Veyra à votre projet</h1>
+<p class="text-zinc-500 mt-2">Quatre étapes. Le secret ne touche jamais le frontend — les challenges sont créés et vérifiés <b class="text-zinc-300">côté serveur</b>.</p>
+</div>
+
+<div class="card p-6 mb-4">
+<div class="flex items-center gap-3 mb-2"><span class="font-mono text-xs text-zinc-500 border border-white/10 rounded-md w-6 h-6 flex items-center justify-center">1</span><h2 class="font-semibold">Enroller l'utilisateur <span class="text-zinc-600 font-normal text-sm">— une fois, côté serveur</span></h2></div>
+<div class="flex items-center justify-between mb-2 mt-4"><span class="text-xs text-zinc-500 font-mono">bash</span><button onclick="copy('c1')" class="text-xs border border-white/15 rounded-md px-2.5 py-1 hover:bg-white/5">Copier</button></div>
+<pre id="c1" class="codebox p-4 text-[12px] leading-5 text-zinc-300 font-mono overflow-auto">curl -s -X POST https://votre-domaine/v1/enroll \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $VEYRA_KEY" \
+  -d '{"userId":"alice","secretWord":"TIGRE","color":"violet","motif":"etoile"}'</pre>
+</div>
+
+<div class="card p-6 mb-4">
+<div class="flex items-center gap-3 mb-2"><span class="font-mono text-xs text-zinc-500 border border-white/10 rounded-md w-6 h-6 flex items-center justify-center">2</span><h2 class="font-semibold">Créer le challenge <span class="text-zinc-600 font-normal text-sm">— côté serveur, à chaque vérification</span></h2></div>
+<div class="flex items-center justify-between mb-2 mt-4"><span class="text-xs text-zinc-500 font-mono">bash</span><button onclick="copy('c2')" class="text-xs border border-white/15 rounded-md px-2.5 py-1 hover:bg-white/5">Copier</button></div>
+<pre id="c2" class="codebox p-4 text-[12px] leading-5 text-zinc-300 font-mono overflow-auto">curl -s -X POST https://votre-domaine/v1/challenges \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $VEYRA_KEY" \
+  -d '{"userId":"alice"}'
+# → { id, grid, ttlSeconds, expiresAt, instruction }</pre>
+</div>
+
+<div class="card p-6 mb-4">
+<div class="flex items-center gap-3 mb-2"><span class="font-mono text-xs text-zinc-500 border border-white/10 rounded-md w-6 h-6 flex items-center justify-center">3</span><h2 class="font-semibold">Afficher le widget <span class="text-zinc-600 font-normal text-sm">— avec le challenge du backend</span></h2></div>
+<div class="flex items-center justify-between mb-2 mt-4"><span class="text-xs text-zinc-500 font-mono">web.html</span><button onclick="copy('c3')" class="text-xs border border-white/15 rounded-md px-2.5 py-1 hover:bg-white/5">Copier</button></div>
+<pre id="c3" class="codebox p-4 text-[12px] leading-5 text-zinc-300 font-mono overflow-auto">&lt;script src="https://votre-domaine/widget.js"&gt;&lt;/script&gt;
+&lt;div id="security-check"&gt;&lt;/div&gt;
+&lt;script&gt;
+Veyra.mount({
+  container: "#security-check",
+  apiBase: "https://votre-domaine",
+  challenge: CHALLENGE_JSON_FROM_YOUR_BACKEND,
+  onSuccess: (r) =&gt; fetch("/api/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ user: "alice", veyraSession: r.sessionId })
+  }),
+  onFailure: (r) =&gt; console.log(r.next_action) // retry | require_mfa
+});
+&lt;/script&gt;</pre>
+</div>
+
+<div class="card p-6 mb-4">
+<div class="flex items-center gap-3 mb-2"><span class="font-mono text-xs text-zinc-500 border border-white/10 rounded-md w-6 h-6 flex items-center justify-center">4</span><h2 class="font-semibold">Vérifier la session <span class="text-zinc-600 font-normal text-sm">— côté serveur, jamais le frontend seul</span></h2></div>
+<div class="flex items-center justify-between mb-2 mt-4"><span class="text-xs text-zinc-500 font-mono">node · sdk/veyra.mjs</span><button onclick="copy('c4')" class="text-xs border border-white/15 rounded-md px-2.5 py-1 hover:bg-white/5">Copier</button></div>
+<pre id="c4" class="codebox p-4 text-[12px] leading-5 text-zinc-300 font-mono overflow-auto">import { createClient, requireVeyraSession } from "./sdk/veyra.mjs";
+const veyra = createClient({ baseUrl: process.env.VEYRA_URL, apiKey: process.env.VEYRA_KEY });
+
+const decision = await requireVeyraSession(veyra, sessionId);
+if (!decision.verified) throw new Error("accès refusé");
+if (decision.next_action === "require_mfa") { /* votre MFA */ }</pre>
+<p class="text-[13px] text-zinc-500 mt-4">Le <span class="font-mono text-zinc-300">risk_score</span> est un signal, pas une preuve : logguez-le, ne bannissez pas dessus. Règles : <span class="font-mono text-zinc-300">none → continuer</span>, <span class="font-mono text-zinc-300">retry → nouvel essai</span>, <span class="font-mono text-zinc-300">require_mfa → votre MFA</span>.</p>
+</div>
+
+<div class="card p-6 mb-12">
+<h2 class="font-semibold mb-1">Configuration production <span class="text-zinc-600 font-normal text-sm">— <span class="font-mono">api/.env</span></span></h2>
+<p class="text-[13px] text-zinc-500 mb-4">Référence complète dans <a class="text-zinc-200 underline underline-offset-4" href="https://github.com/bigk7697-crypto/Veyra/blob/main/INTEGRATION.md">INTEGRATION.md</a>.</p>
+<table class="cfg font-mono text-xs"><tr><th>Variable</th><th>À mettre en prod</th></tr>
+<tr><td class="text-zinc-300">PUBLIC_BASE_URL</td><td class="text-zinc-500">votre domaine https</td></tr>
+<tr><td class="text-zinc-300">CORS_ORIGINS</td><td class="text-zinc-500">vos frontends, séparés par virgules</td></tr>
+<tr><td class="text-zinc-300">WIDGET_ALLOWED_ORIGINS</td><td class="text-zinc-500">vos domaines navigateur</td></tr>
+<tr><td class="text-zinc-300">VEYRA_MASTER_KEY</td><td class="text-zinc-500">fixée (64 hex), <span class="font-sans">data/ persisté</span></td></tr>
+<tr><td class="text-zinc-300">DEMO_ENABLED</td><td class="text-zinc-500">false</td></tr>
+<tr><td class="text-zinc-300">TRUST_PROXY</td><td class="text-zinc-500">1 derrière nginx/Caddy</td></tr></table>
+</div>
+</main>
+
+<footer class="border-t border-white/10 py-6 text-center text-[13px] text-zinc-600">
+<a href="/" class="hover:text-white">Accueil</a> · <a href="/demo.html" class="hover:text-white">Démo</a> · <a href="/integration.html" class="text-zinc-300">Intégration</a> · <a href="/dashboard.html" class="hover:text-white">Dashboard</a> · <a href="https://github.com/bigk7697-crypto/Veyra" class="hover:text-white">GitHub</a>
+</footer>
+<div id="toast"></div>
+<script>
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2200);}
+function copy(id){const t=document.getElementById(id).innerText;const done=()=>toast('Copié dans le presse-papiers');if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(()=>toast('Copie impossible'));}else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}ta.remove();}}
+try{const origin=location.origin;['c1','c2','c3'].forEach(id=>{const n=document.getElementById(id);n.innerText=n.innerText.split('https://votre-domaine').join(origin);});}catch(e){}
+</script>
+<script src="/bg.js"></script>
+</body>
+</html>

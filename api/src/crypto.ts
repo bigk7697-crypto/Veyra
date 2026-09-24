@@ -1,8 +1,9 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const DATA_DIR = join(process.cwd(), "data");
+const DATA_DIR = process.env.VERCEL ? join(tmpdir(), "veyra-data") : join(process.cwd(), "data");
 
 function masterKey(): Buffer {
   const env = String(process.env.VEYRA_MASTER_KEY ?? "").trim();

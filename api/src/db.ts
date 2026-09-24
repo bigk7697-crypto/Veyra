@@ -1,10 +1,14 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { ChallengeCell, VeyraColor, VeyraMotif } from "./challenge.js";
 import type { RiskResult } from "./risk.js";
 
-const DATA_DIR = join(process.cwd(), "data");
+// Serverless (Vercel) : filesystem en lecture seule hors /tmp.
+// Les données y sont éphémères (reset à chaque cold start) :
+// OK pour la démo, Postgres (db/schema.sql) pour la prod durable.
+const DATA_DIR = process.env.VERCEL ? join(tmpdir(), "veyra-data") : join(process.cwd(), "data");
 mkdirSync(DATA_DIR, { recursive: true });
 
 export const db = new DatabaseSync(join(DATA_DIR, "veyra.db"));

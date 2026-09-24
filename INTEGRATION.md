@@ -133,3 +133,25 @@ if (decision.next_action === "require_mfa") { /* votre MFA */ }
 - [ ] Au moins une clé API créée, `DEMO_ENABLED=false`
 - [ ] Challenges créés et sessions vérifiées **côté serveur**
 - [ ] `docker compose up --build -d`, healthcheck sur `GET /health`
+
+## 7. Déployer sur Vercel
+
+Le repo est prêt : `vercel.json` (build + fonction `/api/server` + rewrites),
+`api/server.js` (adaptateur serverless, réutilise l'app Fastify) et stockage
+éphémère automatique (`VEYRA_EPHEMERE` via `/tmp` quand `VERCEL=1`).
+
+1. **Vercel Dashboard → Add New Project → Import** `bigk7697-crypto/Veyra`
+   (Framework Preset: Other, tout est déjà dans `vercel.json`).
+2. **Environment Variables** à définir :
+   - `VEYRA_MASTER_KEY` = 64 caractères hex (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
+   - `PUBLIC_BASE_URL` = votre URL `https://…vercel.app`
+   - `CORS_ORIGINS` + `WIDGET_ALLOWED_ORIGINS` = vos domaines
+   - `DEMO_ENABLED` = `false`, `TRUST_PROXY` = `1`
+3. **Deploy**. Statics (`/`, `/dashboard.html`, `/widget.js`) via CDN,
+   API (`/v1/*`, `/health`) via la fonction serverless.
+
+Limites serverless (honnêtes) : les données SQLite vivent en `/tmp` et sont
+**perdues à chaque cold start** — parfait pour essayer, pas pour garder des
+users. Pour une prod durable : créez une clé, exportez vos users, ou branchez
+Postgres (`api/db/schema.sql` + `DATABASE_URL`, couche à implémenter dans
+`api/src/db.ts`).
