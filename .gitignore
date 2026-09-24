@@ -1,0 +1,19 @@
+# Deps
+node_modules/
+api/node_modules/
+
+# Runtime / secrets — JAMAIS commiter
+api/data/
+*.db
+master.key
+.env
+api/.env
+
+# Build
+api/dist/
+
+# Logs & OS
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,12 @@
+services:
+  api:
+    build: ./api
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - VEYRA_MASTER_KEY=${VEYRA_MASTER_KEY:-}
+    volumes:
+      - veyradata:/app/data
+volumes:
+  veyradata:

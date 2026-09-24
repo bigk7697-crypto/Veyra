@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Veyra — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { sans: ["Inter","-apple-system","sans-serif"], mono: ["JetBrains Mono","ui-monospace","monospace"] }
+} } };
+</script>
+<style>
+body{background:#0a0a0b}
+.card{background:#131316;border:1px solid rgba(255,255,255,.08);border-radius:16px}
+.inp{background:#0a0a0b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;font-size:13px;color:#fafafa;outline:none}
+.inp:focus{border-color:#10b981}
+.navbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;color:#a1a1aa;padding:9px 12px;border-radius:10px;font-size:14px;border:1px solid transparent;background:none;cursor:pointer}
+.navbtn:hover{color:#fff}.navbtn.active{background:#1c1c21;color:#fff;border-color:rgba(255,255,255,.08)}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#71717a;text-align:left;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08);font-weight:600}
+td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+tbody tr:hover td{background:rgba(255,255,255,.02)}
+.pill{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:2px 10px;border:1px solid rgba(255,255,255,.1)}
+.pill.low,.pill.ok{color:#34d399;border-color:rgba(52,211,153,.35)}.pill.medium{color:#fbbf24;border-color:rgba(251,191,36,.35)}.pill.high,.pill.ko{color:#f87171;border-color:rgba(248,113,113,.35)}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1c21;border:1px solid rgba(255,255,255,.12);padding:10px 18px;border-radius:10px;font-size:13px;display:none;z-index:200}
+.skel{background:linear-gradient(90deg,#1c1c21 25%,#26262c 50%,#1c1c21 75%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:8px;color:transparent !important}
+@keyframes sh{to{background-position:-200% 0}}
+.view{display:none}.view.active{display:block}
+#ovl{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+#ovl.open{display:flex}
+</style>
+</head>
+<body class="text-zinc-100 font-sans antialiased">
+<div class="grid lg:grid-cols-[248px_1fr] min-h-screen">
+
+<!-- SIDEBAR -->
+<aside class="hidden lg:flex flex-col border-r border-white/10 bg-[#0c0c0e] p-4 sticky top-0 h-screen">
+<a href="/" class="flex items-center gap-2.5 font-extrabold tracking-[0.2em] text-sm px-2 pt-1 pb-6">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z" stroke="#8b5cf6" stroke-width="2" fill="rgba(139,92,246,.15)"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="#10b981" stroke-width="2" stroke-linecap="round"/></svg>VEYRA</a>
+<nav class="flex flex-col gap-1">
+<button class="navbtn active" onclick="show('overview',this)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Overview</button>
+<button class="navbtn" onclick="show('keys',this)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L21 2m-4 4l3 3"/></svg>Clés API</button>
+<button class="navbtn" onclick="show('activity',this)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>Activité</button>
+</nav>
+<div class="mt-auto text-xs text-zinc-600 px-2">
+<div class="flex items-center gap-2 border-t border-white/10 pt-4"><span class="w-2 h-2 rounded-full bg-emerald-400"></span><span id="side-status">API v1.0</span></div>
+<a href="/" class="block mt-3 text-zinc-500 hover:text-white">← Démo publique</a>
+</div>
+</aside>
+
+<!-- MAIN -->
+<div class="p-6 md:p-8 max-w-5xl w-full">
+<div class="flex items-center gap-3 mb-7 flex-wrap">
+<h1 class="text-xl font-semibold" id="title">Overview</h1>
+<div class="flex-1"></div>
+<input id="key" class="inp font-mono !text-xs w-64" placeholder="Clé API (veyra_…)">
+<button class="bg-white text-black text-[13px] font-semibold rounded-lg px-4 py-2 hover:bg-zinc-200" onclick="saveKey()">Utiliser</button>
+</div>
+<div id="auth-warn" class="hidden mb-4 text-[13px] text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded-xl px-4 py-3">API protégée par clé — collez une clé ci-dessus, ou créez-en une dans l'onglet Clés API.</div>
+
+<!-- OVERVIEW -->
+<section id="v-overview" class="view active">
+<div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-5" id="stats">
+<div class="card p-4"><div class="text-[11px] uppercase tracking-wider text-zinc-500">Utilisateurs</div><div class="text-3xl font-bold mt-1 font-mono skel">0</div></div>
+<div class="card p-4"><div class="text-[11px] uppercase tracking-wider text-zinc-500">Challenges</div><div class="text-3xl font-bold mt-1 font-mono skel">0</div></div>
+<div class="card p-4"><div class="text-[11px] uppercase tracking-wider text-zinc-500">Vérifiés</div><div class="text-3xl font-bold mt-1 font-mono skel">0</div></div>
+<div class="card p-4"><div class="text-[11px] uppercase tracking-wider text-zinc-500">Bloqués</div><div class="text-3xl font-bold mt-1 font-mono skel">0</div></div>
+</div>
+<div class="card p-5">
+<div class="flex items-center justify-between mb-3"><div><h2 class="font-semibold text-[15px]">Événements récents</h2><p class="text-[13px] text-zinc-500">Dernières décisions de sécurité, en direct.</p></div>
+<button class="text-xs border border-white/15 rounded-lg px-3 py-1.5 hover:bg-white/5" onclick="show('activity',document.querySelector('[onclick*=\'activity\']'))">Tout voir</button></div>
+<div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Type</th><th>User</th><th>Session</th><th>Risque</th><th>Date</th></tr></thead><tbody id="recent"></tbody></table></div>
+</div>
+</section>
+
+<!-- KEYS -->
+<section id="v-keys" class="view">
+<div class="card p-5">
+<div class="flex items-center justify-between flex-wrap gap-3 mb-1"><div><h2 class="font-semibold text-[15px]">Clés API</h2><p class="text-[13px] text-zinc-500">Une clé par application cliente, envoyée dans <span class="font-mono text-zinc-300">X-API-Key</span>.</p></div>
+<div class="flex gap-2"><input id="key-name" class="inp w-44" placeholder="Nom — ex : prod-app"><button class="bg-white text-black text-[13px] font-semibold rounded-lg px-4 py-2 hover:bg-zinc-200" onclick="openCreate()">+ Créer</button></div></div>
+<div class="overflow-x-auto mt-3"><table class="w-full"><thead><tr><th>Préfixe</th><th>Nom</th><th>Créée le</th><th></th></tr></thead><tbody id="keys"></tbody></table></div>
+</div>
+</section>
+
+<!-- ACTIVITY -->
+<section id="v-activity" class="view">
+<div class="card p-5">
+<div class="flex items-center justify-between flex-wrap gap-3 mb-3"><div><h2 class="font-semibold text-[15px]">Activité sécurité</h2><p class="text-[13px] text-zinc-500">Journal temps réel.</p></div>
+<div class="flex items-center gap-2">
+<select id="f-type" class="inp" onchange="loadEvents()"><option value="">Tous types</option><option value="enroll">enroll</option><option value="challenge.created">challenge.created</option><option value="challenge.verified">challenge.verified</option><option value="challenge.failed">challenge.failed</option><option value="challenge.blocked">challenge.blocked</option></select>
+<button class="text-xs border border-white/15 rounded-lg px-3 py-2 hover:bg-white/5" onclick="loadEvents()">Actualiser</button>
+<label class="text-xs text-zinc-500 flex items-center gap-1.5"><input type="checkbox" id="auto" checked class="accent-emerald-500">auto</label>
+</div></div>
+<div class="overflow-x-auto"><table class="w-full"><thead><tr><th>#</th><th>Type</th><th>User</th><th>Session</th><th>Risque</th><th>Date</th></tr></thead><tbody id="events"></tbody></table></div>
+</div>
+</section>
+</div>
+</div>
+
+<!-- KEY MODAL -->
+<div id="ovl"><div class="bg-[#141417] border border-white/10 rounded-2xl max-w-md w-full p-7 shadow-2xl">
+<div class="w-11 h-11 rounded-xl bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center mb-4"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L21 2m-4 4l3 3"/></svg></div>
+<h3 class="font-semibold text-lg">Clé API créée</h3>
+<p class="text-[13px] text-zinc-500 mt-1">Copiez-la maintenant — elle ne sera <b class="text-zinc-200">plus jamais affichée</b>. Seule son empreinte est stockée.</p>
+<div class="bg-black border border-white/10 rounded-xl px-4 py-3.5 mt-4">
+<div class="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Votre clé API</div>
+<code id="new-key" class="block mt-2 font-mono text-[13px] leading-6 text-zinc-100" style="word-break:break-all"></code>
+</div>
+<button id="copy-btn" class="w-full mt-3 bg-white text-black text-sm font-semibold rounded-lg py-2.5 hover:bg-zinc-200" onclick="copyKey()">Copier la clé</button>
+<button class="w-full mt-1.5 text-[13px] text-zinc-500 hover:text-white py-2" onclick="closeModal()">Je l'ai enregistrée →</button>
+</div></div>
+<div id="toast"></div>
+
+<script>
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2200);}
+function headers(){const k=localStorage.getItem('veyra_key')||'';const h={'Content-Type':'application/json'};if(k)h['X-API-Key']=k;return h;}
+function show(v,btn){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');document.getElementById('title').textContent=btn?btn.textContent.trim():v;}
+function saveKey(){const k=document.getElementById('key').value.trim();if(k)localStorage.setItem('veyra_key',k);else localStorage.removeItem('veyra_key');toast(k?'Clé enregistrée':'Mode sans clé');refresh();}
+function pill(t){return '<span class="pill '+(t||'').toLowerCase()+'">'+(t||'—')+'</span>';}
+async function loadStats(){try{const r=await fetch('/v1/stats',{headers:headers()});if(r.status===401){document.getElementById('auth-warn').classList.remove('hidden');return;}document.getElementById('auth-warn').classList.add('hidden');const s=await r.json();
+document.getElementById('stats').innerHTML=[['Utilisateurs',s.users,'profils enrollés',''],['Challenges',s.challenges_total,s.challenges_active+' actifs',''],['Vérifiés',s.verified,'accès accordés','text-emerald-400'],['Bloqués',s.blocked,s.high_risk+' high risk',s.blocked>0?'text-red-400':'']].map(([k,v,sub,c])=>'<div class="card p-4"><div class="text-[11px] uppercase tracking-wider text-zinc-500">'+k+'</div><div class="text-3xl font-bold mt-1 font-mono '+c+'">'+v+'</div><div class="text-xs text-zinc-600 mt-1">'+sub+'</div></div>').join('');
+const ev=await (await fetch('/v1/events?limit=8',{headers:headers()})).json();
+document.getElementById('recent').innerHTML=ev.events.map(e=>'<tr><td class="font-mono">'+e.type+'</td><td>'+(e.user_id||'<span class="text-zinc-600">—</span>')+'</td><td class="font-mono text-zinc-500">'+(e.session_id||'').slice(0,8)+'</td><td>'+(e.risk_level?pill(e.risk_level):'<span class="text-zinc-600">—</span>')+'</td><td class="font-mono text-zinc-500 text-xs">'+e.at+'</td></tr>').join('')||'<tr><td colspan=5 class="text-zinc-600 text-[13px] py-4">Aucun événement — passez un challenge depuis la démo.</td></tr>';}catch(e){}}
+async function loadKeys(){try{const r=await fetch('/v1/keys',{headers:headers()});if(!r.ok){document.getElementById('keys').innerHTML='<tr><td colspan=4 class="text-zinc-600 text-[13px] py-4">Collez une clé valide pour gérer les clés.</td></tr>';return;}const j=await r.json();
+document.getElementById('keys').innerHTML=j.keys.map(k=>'<tr><td class="font-mono text-zinc-300">'+k.prefix+'</td><td>'+k.name+'</td><td class="font-mono text-zinc-500 text-xs">'+new Date(k.created_at).toLocaleString()+'</td><td class="text-right"><button class="text-xs text-red-400 border border-red-400/30 rounded-lg px-3 py-1.5 hover:bg-red-400/10" onclick="delKey(\''+k.prefix+'\')">Révoquer</button></td></tr>').join('')||'<tr><td colspan=4 class="text-zinc-600 text-[13px] py-4">Aucune clé — créez-en une pour sécuriser l\'API.</td></tr>';}catch(e){}}
+async function openCreate(){const name=document.getElementById('key-name').value||'default';try{const r=await fetch('/v1/keys',{method:'POST',headers:headers(),body:JSON.stringify({name})});const j=await r.json();if(!j.key){toast('Erreur : '+(j.error||r.status));return;}
+document.getElementById('new-key').textContent=j.key;document.getElementById('copy-btn').textContent='Copier la clé';document.getElementById('ovl').classList.add('open');localStorage.setItem('veyra_key',j.key);document.getElementById('key').value=j.key;loadKeys();}catch(e){toast('Erreur réseau');}}
+function closeModal(){document.getElementById('ovl').classList.remove('open');refresh();}
+function copyKey(){const t=document.getElementById('new-key').textContent;const b=document.getElementById('copy-btn');const done=()=>{toast('Clé copiée dans le presse-papiers');b.textContent='Copié ✓';setTimeout(()=>{b.textContent='Copier la clé';},2000);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(()=>toast('Copie impossible — sélectionnez la clé manuellement'));}else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){toast('Copie impossible')}ta.remove();}}
+async function delKey(prefix){if(!confirm('Révoquer la clé '+prefix+' ? Les apps qui l\'utilisent seront rejetées.'))return;await fetch('/v1/keys/'+prefix,{method:'DELETE',headers:headers()});toast('Clé révoquée');loadKeys();}
+async function loadEvents(){try{const r=await fetch('/v1/events?limit=100',{headers:headers()});if(!r.ok)return;const j=await r.json();const f=document.getElementById('f-type').value;
+const rows=j.events.filter(e=>!f||e.type===f);
+document.getElementById('events').innerHTML=rows.map(e=>'<tr><td class="font-mono text-zinc-500">'+e.id+'</td><td class="font-mono">'+e.type+'</td><td>'+(e.user_id||'<span class="text-zinc-600">—</span>')+'</td><td class="font-mono text-zinc-500">'+(e.session_id||'').slice(0,8)+'</td><td>'+(e.risk_level?pill(e.risk_level):'<span class="text-zinc-600">—</span>')+'</td><td class="font-mono text-zinc-500 text-xs">'+e.at+'</td></tr>').join('')||'<tr><td colspan=6 class="text-zinc-600 text-[13px] py-4">Aucun événement.</td></tr>';}catch(e){}}
+async function refresh(){await loadStats();await loadKeys();await loadEvents();}
+document.getElementById('key').value=localStorage.getItem('veyra_key')||'';
+document.getElementById('ovl').addEventListener('click',e=>{if(e.target.id==='ovl')closeModal();});
+refresh();setInterval(()=>{if(document.getElementById('auto').checked)refresh();},5000);
+</script>
+</body>
+</html>

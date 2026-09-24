@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Veyra — Couche anti-bot interactive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: { sans: ["Inter","-apple-system","sans-serif"], mono: ["JetBrains Mono","ui-monospace","monospace"] },
+    colors: { base: "#0a0a0b", panel: "#131316", line: "rgba(255,255,255,0.08)", mut: "#a1a1aa", acc: "#10b981" }
+  } }
+};
+</script>
+<style>
+body{background:#0a0a0b}
+.blob{position:absolute;border-radius:9999px;filter:blur(110px);opacity:.16;pointer-events:none}
+.card{background:#131316;border:1px solid rgba(255,255,255,.08);border-radius:16px}
+.inp{width:100%;background:#0a0a0b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;font-size:14px;color:#fafafa;outline:none}
+.inp:focus{border-color:#10b981}
+.codebox{background:#0a0a0b;border:1px solid rgba(255,255,255,.08);border-radius:12px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1c21;border:1px solid rgba(255,255,255,.12);padding:10px 18px;border-radius:10px;font-size:13px;display:none;z-index:50}
+#l-out{white-space:pre-wrap}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#27272a;border-radius:8px}
+</style>
+</head>
+<body class="text-zinc-100 font-sans antialiased min-h-screen">
+
+<!-- NAV -->
+<header class="sticky top-0 z-30 border-b border-white/10 bg-[#0a0a0b]/80 backdrop-blur-md">
+<div class="max-w-6xl mx-auto px-6 h-16 flex items-center gap-8">
+<a href="/" class="flex items-center gap-2.5 font-extrabold tracking-[0.2em] text-sm">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z" stroke="#8b5cf6" stroke-width="2" fill="rgba(139,92,246,.15)"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="#10b981" stroke-width="2" stroke-linecap="round"/></svg>VEYRA</a>
+<nav class="hidden md:flex items-center gap-6 text-sm text-zinc-400 ml-4">
+<a href="#demo" class="hover:text-white">Démo</a>
+<a href="#integration" class="hover:text-white">Intégration</a>
+<a href="/dashboard.html" class="hover:text-white">Dashboard</a>
+<a href="/widget.js" class="hover:text-white font-mono text-xs">widget.js</a>
+</nav>
+<div class="ml-auto flex items-center gap-3">
+<span class="hidden sm:inline-flex items-center gap-2 text-xs text-zinc-400 border border-white/10 rounded-full px-3 py-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400" id="health-dot"></span><span id="health-txt" class="font-mono">…</span></span>
+<a href="/dashboard.html" class="bg-white text-black text-sm font-semibold rounded-lg px-4 py-2 hover:bg-zinc-200">Dashboard</a>
+</div>
+</div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6">
+<!-- HERO -->
+<section class="relative text-center pt-20 pb-10">
+<div class="blob w-[500px] h-[300px] bg-violet-600 left-1/2 -translate-x-1/2 -top-10"></div>
+<div class="relative">
+<div class="inline-flex items-center gap-2 text-xs text-zinc-400 border border-white/10 rounded-full px-4 py-1.5 bg-white/[0.02]">API de sécurité · Challenges interactifs · v1.0</div>
+<h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mt-6 leading-[1.05]">Stop bots with<br>interactive proof.</h1>
+<p class="text-zinc-400 text-lg max-w-2xl mx-auto mt-5">Veyra ajoute une vérification visuelle personnalisée — couleur, motif et mot secret — avec un score de risque en temps réel. Derrière le jeu : une vraie API de décision.</p>
+<div class="flex items-center justify-center gap-3 mt-8">
+<a href="#demo" class="bg-white text-black font-semibold rounded-lg px-5 py-2.5 text-sm hover:bg-zinc-200">Essayer la démo</a>
+<a href="#integration" class="border border-white/15 rounded-lg px-5 py-2.5 text-sm font-medium hover:bg-white/5">Lire la doc</a>
+</div>
+<div class="flex items-center justify-center gap-2.5 mt-8 text-[13px] text-zinc-500 flex-wrap">
+<span class="border border-white/10 rounded-full px-3.5 py-1.5 bg-white/[0.02]">Challenges <b class="text-zinc-100 font-mono" id="st-c">—</b></span>
+<span class="border border-white/10 rounded-full px-3.5 py-1.5 bg-white/[0.02]">Vérifiés <b class="text-emerald-400 font-mono" id="st-v">—</b></span>
+<span class="border border-white/10 rounded-full px-3.5 py-1.5 bg-white/[0.02]">Bloqués <b class="text-red-400 font-mono" id="st-b">—</b></span>
+</div>
+</div>
+</section>
+
+<!-- DEMO + INTEGRATION -->
+<section id="demo" class="grid md:grid-cols-2 gap-5 mt-6 scroll-mt-24">
+<div class="card p-6">
+<div class="flex items-center justify-between mb-1"><h2 class="font-semibold">Démo live</h2><span class="text-[11px] text-zinc-500 border border-white/10 rounded-full px-2.5 py-1">SANDBOX</span></div>
+<p class="text-[13px] text-zinc-500 mb-5">Enrollez un utilisateur, puis passez le challenge comme dans votre app.</p>
+<label class="text-xs text-zinc-500 block mb-1.5">User ID</label>
+<input id="e-user" class="inp" value="demo-tigre">
+<label class="text-xs text-zinc-500 block mt-3 mb-1.5">Mot secret <span class="text-zinc-600">(3–6 lettres)</span></label>
+<input id="e-secret" class="inp font-mono uppercase" value="TIGRE" maxlength="6">
+<div class="grid grid-cols-2 gap-3 mt-3">
+<div><label class="text-xs text-zinc-500 block mb-1.5">Couleur</label>
+<select id="e-color" class="inp"><option>violet</option><option>jaune</option><option>bleu</option></select></div>
+<div><label class="text-xs text-zinc-500 block mb-1.5">Motif</label>
+<select id="e-motif" class="inp"><option>etoile</option><option>rond</option><option>triangle</option></select></div>
+</div>
+<label class="text-xs text-zinc-500 block mt-3 mb-1.5">Clé API <span class="text-zinc-600">(si configurée)</span></label>
+<input id="e-key" class="inp font-mono text-xs" placeholder="veyra_…">
+<div class="flex gap-2.5 mt-4">
+<button onclick="enroll()" class="flex-1 border border-white/15 rounded-lg py-2.5 text-sm font-medium hover:bg-white/5">1 · Enroller</button>
+<button onclick="login()" class="flex-1 bg-white text-black rounded-lg py-2.5 text-sm font-semibold hover:bg-zinc-200">2 · Challenge</button>
+</div>
+<p id="e-msg" class="text-[13px] text-zinc-500 mt-3"></p>
+<div id="security-check" class="mt-2"></div>
+<pre id="l-out" class="codebox p-3.5 mt-3 text-xs text-zinc-400 font-mono overflow-auto">En attente de vérification…</pre>
+</div>
+
+<div class="card p-6" id="integration">
+<div class="flex items-center justify-between mb-1"><h2 class="font-semibold">Intégration · 5 min</h2><span class="text-[11px] text-zinc-500 border border-white/10 rounded-full px-2.5 py-1">3 ÉTAPES</span></div>
+<p class="text-[13px] text-zinc-500 mb-5">Widget côté client, enroll côté serveur, décision via l'API.</p>
+<div class="flex items-center justify-between mb-2"><span class="text-xs text-zinc-500 font-mono">web.html</span><button onclick="copy('c1')" class="text-xs border border-white/15 rounded-md px-2.5 py-1 hover:bg-white/5">Copier</button></div>
+<pre id="c1" class="codebox p-4 text-[12px] leading-5 text-zinc-300 font-mono overflow-auto">&lt;script src="https://votre-domaine/widget.js"&gt;&lt;/script&gt;
+&lt;div id="security-check"&gt;&lt;/div&gt;
+&lt;script&gt;
+Veyra.challenge({
+  container: "#security-check",
+  apiBase: "https://votre-domaine",
+  userId: "alice",
+  onSuccess: (r) =&gt; console.log(r.sessionId),
+  onFailure: (r) =&gt; console.log(r.next_action)
+});
+&lt;/script&gt;</pre>
+<div class="flex items-center justify-between mt-5 mb-2"><span class="text-xs text-zinc-500 font-mono">api · REST</span><button onclick="copy('c2')" class="text-xs border border-white/15 rounded-md px-2.5 py-1 hover:bg-white/5">Copier</button></div>
+<pre id="c2" class="codebox p-4 text-[12px] leading-5 text-zinc-300 font-mono overflow-auto">POST /v1/enroll        { userId, secretWord, color, motif }
+POST /v1/challenges    { userId } → { id, grid, ttlSeconds }
+POST /v1/challenges/:id/verify
+  → { verified, risk_score, risk_level, next_action }</pre>
+<ul class="text-[13px] text-zinc-500 mt-5 space-y-2.5">
+<li class="flex gap-2.5"><span class="text-zinc-200 font-mono text-xs border border-white/10 rounded-md w-5 h-5 flex items-center justify-center shrink-0 mt-0.5">1</span>Enroll une fois par utilisateur. Secret hashé scrypt, jamais en clair.</li>
+<li class="flex gap-2.5"><span class="text-zinc-200 font-mono text-xs border border-white/10 rounded-md w-5 h-5 flex items-center justify-center shrink-0 mt-0.5">2</span>Le widget affiche une grille unique à chaque challenge.</li>
+<li class="flex gap-2.5"><span class="text-zinc-200 font-mono text-xs border border-white/10 rounded-md w-5 h-5 flex items-center justify-center shrink-0 mt-0.5">3</span>Votre backend applique <span class="font-mono text-zinc-300">next_action</span> : none · retry · require_mfa.</li>
+</ul>
+</div>
+</section>
+
+<!-- FEATURES -->
+<section class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5 mb-16">
+<div class="card p-5"><p class="font-medium text-sm mb-1.5">Challenge dynamique</p><p class="text-[13px] text-zinc-500 leading-5">Positions, couleurs, distracteurs et motifs mélangés. Jamais deux fois pareil.</p></div>
+<div class="card p-5"><p class="font-medium text-sm mb-1.5">Secret personnalisé</p><p class="text-[13px] text-zinc-500 leading-5">Couleur + motif + mot secret. Stockage scrypt et AES-256-GCM.</p></div>
+<div class="card p-5"><p class="font-medium text-sm mb-1.5">Risk Engine</p><p class="text-[13px] text-zinc-500 leading-5">Temps, intervalles, corrections, essais. Un signal, pas une sentence.</p></div>
+<div class="card p-5"><p class="font-medium text-sm mb-1.5">Clés &amp; dashboard</p><p class="text-[13px] text-zinc-500 leading-5">Clés révocables, stats et événements temps réel.</p></div>
+</section>
+</main>
+
+<footer class="border-t border-white/10 py-6 text-center text-[13px] text-zinc-600">VEYRA v1.0 · API de décision de sécurité · <a href="/dashboard.html" class="text-zinc-400 hover:text-white">Dashboard</a></footer>
+<div id="toast"></div>
+<script src="/widget.js"></script>
+<script>
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2200);}
+function copy(id){const t=document.getElementById(id).innerText;const done=()=>toast('Copié dans le presse-papiers');if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(()=>toast('Copie impossible'));}else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}ta.remove();}}
+function keyHeaders(){const k=document.getElementById('e-key').value.trim();const h={'Content-Type':'application/json'};if(k)h['X-API-Key']=k;return h;}
+async function enroll(){const body={userId:document.getElementById('e-user').value.trim(),secretWord:document.getElementById('e-secret').value,color:document.getElementById('e-color').value,motif:document.getElementById('e-motif').value};
+try{const r=await fetch('/v1/enroll',{method:'POST',headers:keyHeaders(),body:JSON.stringify(body)});const j=await r.json();const m=document.getElementById('e-msg');m.textContent=r.ok?('Enrollé : '+j.userId+' · '+j.color+' · '+j.motif):('Erreur : '+(j.error||r.status));m.className='text-[13px] mt-3 '+(r.ok?'text-emerald-400':'text-red-400');}catch(e){document.getElementById('e-msg').textContent='Erreur réseau';}}
+function login(){const userId=document.getElementById('e-user').value.trim();const apiKey=document.getElementById('e-key').value.trim();
+document.getElementById('l-out').textContent='Challenge en cours…';
+Veyra.challenge({container:'#security-check',apiBase:'',userId,apiKey,
+onSuccess:(r)=>{document.getElementById('l-out').innerHTML='<span style="color:#34d399">ACCÈS ACCORDÉ</span>\n'+JSON.stringify(r,null,2);refreshStats();},
+onFailure:(r)=>{document.getElementById('l-out').innerHTML='<span style="color:#f87171">VÉRIFICATION ÉCHOUÉE</span>\n'+JSON.stringify(r,null,2);refreshStats();}});}
+async function refreshStats(){try{const s=await (await fetch('/v1/stats')).json();document.getElementById('st-c').textContent=s.challenges_total;document.getElementById('st-v').textContent=s.verified;document.getElementById('st-b').textContent=s.blocked;}catch(e){}}
+(async()=>{try{const h=await (await fetch('/health')).json();document.getElementById('health-txt').textContent=h.service+' '+h.version;}catch(e){document.getElementById('health-txt').textContent='hors ligne';document.getElementById('health-dot').className='w-2 h-2 rounded-full bg-red-400';}refreshStats();
+try{const origin=location.origin;['c1','c2'].forEach(id=>{const n=document.getElementById(id);n.innerText=n.innerText.split('https://votre-domaine').join(origin);});}catch(e){}})();
+</script>
+</body>
+</html>
