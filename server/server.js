@@ -1,12 +1,11 @@
 // Entrée serverless Vercel (voir vercel.json à la racine : /v1/* et /health
-// sont réécrits vers cette fonction). Le build `npm run build` (dossier
-// server/) génère server/dist/.
+// sont réécrits vers cette fonction). Le build `npm run build` génère dist/.
 let appPromise = null;
 
 module.exports = async (req, res) => {
   try {
     if (!appPromise) {
-      const { buildApp } = require("../server/dist/index.js");
+      const { buildApp } = require("./dist/index.js");
       appPromise = buildApp().then(async (app) => {
         await app.ready();
         return app;

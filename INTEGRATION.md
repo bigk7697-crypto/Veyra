@@ -30,7 +30,7 @@ npm start              # écoute sur PORT (3000 par défaut)
 docker compose up --build -d
 ```
 
-Persistance : SQLite dans `api/data/` (monté en volume dans compose).
+Persistance : SQLite dans `server/data/` (monté en volume dans compose).
 Sauvegardez ce dossier, ainsi que `VEYRA_MASTER_KEY` (sans elle, les secrets
 enrollés deviennent illisibles après redéploiement).
 
@@ -79,7 +79,7 @@ Veyra.mount({
   container: "#security-check",
   apiBase: "https://veyra.example.com",
   challenge: CHALLENGE_JSON_FROM_YOUR_BACKEND, // ou challengeId: "<id>"
-  onSuccess: (r) => fetch("/api/login", {
+  onSuccess: (r) => fetch("/server/login", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({ user: "alice", veyraSession: r.sessionId })
@@ -127,7 +127,7 @@ if (decision.next_action === "require_mfa") { /* votre MFA */ }
 
 ## 6. Checklist production
 
-- [ ] `VEYRA_MASTER_KEY` fixée + `api/data/` persisté et sauvegardé
+- [ ] `VEYRA_MASTER_KEY` fixée + `server/data/` persisté et sauvegardé
 - [ ] HTTPS devant l'API (reverse proxy), `TRUST_PROXY=1`
 - [ ] `CORS_ORIGINS` + `WIDGET_ALLOWED_ORIGINS` restreints à vos domaines
 - [ ] Au moins une clé API créée, `DEMO_ENABLED=false`
@@ -136,8 +136,8 @@ if (decision.next_action === "require_mfa") { /* votre MFA */ }
 
 ## 7. Déployer sur Vercel
 
-Le repo est prêt : `vercel.json` (build + fonction `/api/server` + rewrites),
-`api/server.js` (adaptateur serverless, réutilise l'app Fastify) et stockage
+Le repo est prêt : `vercel.json` (build + fonction `/server/server` + rewrites),
+`server/server.js` (adaptateur serverless, réutilise l'app Fastify) et stockage
 éphémère automatique (`VEYRA_EPHEMERE` via `/tmp` quand `VERCEL=1`).
 
 1. **Vercel Dashboard → Add New Project → Import** `bigk7697-crypto/Veyra`
@@ -153,5 +153,5 @@ Le repo est prêt : `vercel.json` (build + fonction `/api/server` + rewrites),
 Limites serverless (honnêtes) : les données SQLite vivent en `/tmp` et sont
 **perdues à chaque cold start** — parfait pour essayer, pas pour garder des
 users. Pour une prod durable : créez une clé, exportez vos users, ou branchez
-Postgres (`api/db/schema.sql` + `DATABASE_URL`, couche à implémenter dans
-`api/src/db.ts`).
+Postgres (`server/db/schema.sql` + `DATABASE_URL`, couche à implémenter dans
+`server/src/db.ts`).
