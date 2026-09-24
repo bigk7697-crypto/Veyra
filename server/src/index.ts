@@ -2,7 +2,6 @@ import "dotenv/config";
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
-import fastifyStatic from "@fastify/static";
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -34,7 +33,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(rateLimit, { max: cfg.rateMax, timeWindow: cfg.rateWindow });
   // En serverless (Vercel), les fichiers statics sont servis par le CDN :
   // on ne monte le dossier public que s'il existe à côté du serveur.
+  // Import dynamique : @fastify/static tire une dépendance ESM-only que le
+  // runtime serverless ne peut pas require() — on ne la charge qu'en local.
   if (existsSync(PUBLIC_DIR)) {
+    const { default: fastifyStatic } = await import("@fastify/static");
     await app.register(fastifyStatic, { root: PUBLIC_DIR, prefix: "/", index: cfg.demoEnabled ? "index.html" : false });
   }
 
